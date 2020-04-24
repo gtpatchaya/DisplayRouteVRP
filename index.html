@@ -1,0 +1,910 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>VRP : drawing</title>
+    <style type="text/css">
+        body {
+            font-family: sans-serif;
+            font-size: 12px;
+        }
+        #map {
+            position: relative;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            height: 800px;
+        }
+        #show {
+            background-color: #ffffff;
+            border: 1px solid #2d2f37;
+            border-radius: 3px;
+            padding: 15px;
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            vertical-align: middle;
+            display: none;
+        }
+        .labelTxt {
+            width: 60px;
+            display: inline-block;
+            padding-right: 5px;
+        }
+        .loadingWidget {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: White url('https://developer.nostramap.com/developer/V2/images/loader.gif') no-repeat fixed center center;
+            filter: alpha(opacity=60);
+            opacity: 0.6;
+            z-index: 10000;
+            vertical-align: middle;
+            top: 0px;
+            left: 0px;
+        }
+        #divLang label:hover, #divLang input:hover {
+            cursor: pointer;
+        }
+    </style>
+<style>
+    .switch {
+      position: relative;
+      display: none;
+      width: 55px;
+      height: 28px;
+      margin-top: 15px;
+      line-height: 17px;
+      outline: 0px;
+    
+    }
+    
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 27px;
+      width: 22px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+    
+    input:checked + .slider {
+      background-color: #6d93cd;
+    }
+    
+    input:focus + .slider {
+      box-shadow: 0 0 1px #2196F3;
+    }
+    
+    input:checked + .slider:before {
+      -webkit-transform: translateX(26px);
+      -ms-transform: translateX(26px);
+      transform: translateX(26px);
+    }
+    
+    /* Rounded sliders */
+    .slider.round {
+      border-radius: 0px;
+      margin-top: -7px;
+    }
+    
+    .slider.round:before {
+      border-radius: 0%;
+    }
+
+    .color_switch{
+        /* height: 0px; */
+        width: 30px;
+        border-radius: 0%;
+        border-color: #6d93cd;
+        outline: 0;
+        /* margin-top: 15px; */
+    }
+    </style>
+    <script type="text/javascript" src="//api.nostramap.com/nostraapi/v2.0?key=GzK0Ok0h)7dNsn15p1u4OgA6vKxWzv4UimteWZC0kc2lo)UwNjYrJLjrWWqtSHLQ7IF4MlVKvcBCk6ONNJ5sIym=====2"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    
+
+
+
+    <script type="text/javascript">
+        var map;
+        var baseMapCountry = "TH";
+        var isFirstLoad = true;
+        var menuName = null; // ST: street Map; OP: openStreetMap; IM: imagery; HY: hybrid; PM: PremimumMap
+        var points1 =[];
+        var points2 =[];
+        var points3 =[];
+
+        var points4 = [];
+        
+        var points_position =[];
+        var pointLayer ;
+        var setPointLayer = [];
+        var route_req
+
+        var lstLabel = [];
+        var step_route_all = [];
+        var Set_step_route_all = []; 
+
+        nostra.onready = function () {
+           
+            nostra.config.Language.setLanguage(nostra.language.E);
+            initialize();
+        
+        };
+
+        function initialize() {
+            map = new nostra.maps.Map("map", {
+                id: "mapTest",
+                logo: true,
+                scalebar: true,
+                basemap: "streetmap",
+                slider: true,
+                level: 15,
+                lat: 13.722944,
+                lon: 100.530449,
+                country: baseMapCountry
+            });
+            map.events.layerAddComplete = function (e) {
+                if (!isFirstLoad) {
+                    hideLoading();
+                }
+            };
+            map.events.load = function () {
+                hideLoading();
+                isFirstLoad = false;
+            };
+            
+            pointLayer = new nostra.maps.layers.GraphicsLayer(map, { id: "pointLayer", mouseOver: false });
+            map.addLayer(pointLayer);
+
+            // points1 = test(route9901)
+            // points2 = test(route9903)
+            // points3 = test(route9904)
+
+            map.events.click  = (evt) => {
+                //drawmap(evt.mapPoint.getLatitude() ,  evt.mapPoint.getLongitude())
+                console.log(evt.mapPoint.y , evt.mapPoint.x)
+                // var line = new nostra.maps.symbols.Line({ color: "#FF0000", width: 8, transparent: 0.4 });
+                // pointLayer.addLine(points, line);
+                
+            }
+
+            map.events.doubleClick = () =>{
+                
+                alert(route)
+            }
+            
+
+        }
+        function switchStreetMap() {
+            showLoading();
+            menuName = "ST";
+
+            document.getElementById('txtCountry').value = baseMapCountry;
+            document.getElementById("divTextBox").style.display = "inline-block";
+            document.getElementById("divCountry").style.display = "none";
+            document.getElementById("divLang").style.display = "block";
+
+            map.removeAllLayers();
+            map.country = baseMapCountry;
+            var streetMapLayer = new nostra.maps.layers.StreetMap(map);
+            map.addLayer(streetMapLayer);
+
+            map.map.onExtentChange = null;
+        }
+        function switchOSM() {
+            showLoading();
+            menuName = "OP";
+
+            document.getElementById('txtCountry').value = "TH";
+            document.getElementById("divTextBox").style.display = "none";
+            document.getElementById("divCountry").innerHTML = "ALL";
+            document.getElementById("divCountry").style.display = "";
+            document.getElementById("divLang").style.display = "none";
+
+            map.removeAllLayers();
+
+            setTimeout(function () {
+                var basemapObj = new nostra.maps.layers.OpenStreetMap(map);
+                map.addLayer(basemapObj);
+            }, 100);
+
+            map.map.onExtentChange = null;
+        }
+        function switchImagery() {
+            showLoading();
+            menuName = "IM";
+
+            document.getElementById('txtCountry').value = "TH";
+            document.getElementById("divTextBox").style.display = "none";
+            document.getElementById("divCountry").innerHTML = "ALL";
+            document.getElementById("divCountry").style.display = "";
+            document.getElementById("divLang").style.display = "none";
+
+            map.removeAllLayers();
+
+            var imageryLayer = new nostra.maps.layers.Imagery(map);
+            map.addLayer(imageryLayer);
+
+            map.map.onExtentChange = null;
+        }
+        function switchHybrid() {
+            showLoading();
+            menuName = "HY";
+
+            document.getElementById('txtCountry').value = "TH";
+            document.getElementById("divTextBox").style.display = "none";
+            document.getElementById("divCountry").innerHTML = "TH";
+            document.getElementById("divCountry").style.display = "";
+            document.getElementById("divLang").style.display = "none";
+
+            map.removeAllLayers();
+            map.country = "TH";
+
+            var imageryLayer = new nostra.maps.layers.Imagery(map);
+            map.addLayer(imageryLayer);
+            var hybridLineLayer = new nostra.maps.layers.HybridLine(map);
+            map.addLayer(hybridLineLayer);
+            var hybridMaxExtent = {
+                xmin: 11190801.096984113, ymin: 1544817.0653681569, xmax: 11191616.823395455, ymax: 1545198.056181068,
+                spatialReference: { wkid: 102100 }
+            };
+            map.map.extent.update(hybridMaxExtent.xmin, hybridMaxExtent.ymin, hybridMaxExtent.xmax, hybridMaxExtent.ymax, map.map.spatialReference);
+            map.map.setExtent(map.map.extent);
+        }
+        function switchPremiumMap() {
+            showLoading();
+            menuName = "PM";
+
+            document.getElementById('txtCountry').value = "TH";
+            document.getElementById("divTextBox").style.display = "none";
+            document.getElementById("divCountry").innerHTML = "TH";
+            document.getElementById("divCountry").style.display = "";
+            document.getElementById("divLang").style.display = "block";
+
+            map.removeAllLayers();
+            map.country = "TH";
+
+            var streetMapLayer = new nostra.maps.layers.StreetMap(map);
+            map.addLayer(streetMapLayer);
+            var premiumMapLayer = new nostra.maps.layers.PremiumMap(map);
+            map.addLayer(premiumMapLayer);
+
+            // Lock Level PremiumMap
+            var lastExtent = null;
+
+            var premiumMaxExtent = {
+                xmin: 11190801.096984113, ymin: 1544817.0653681569, xmax: 11191616.823395455, ymax: 1545198.056181068,
+                spatialReference: { wkid: 102100 }
+            };
+
+            var premiumMaxLods = 18;
+            var premiumMinLods = 19;
+
+            map.map.extent.update(premiumMaxExtent.xmin, premiumMaxExtent.ymin, premiumMaxExtent.xmax, premiumMaxExtent.ymax, map.map.spatialReference);
+            map.map.setExtent(map.map.extent);
+
+            map.map.onExtentChange = function (extent, delta, levelChange, lod) {
+                if (levelChange) {
+                    if (lod.level < premiumMaxLods) {
+                        map.zoomLevel(18);
+                    } else if (lod.level > premiumMinLods) {
+                        map.zoomLevel(19);
+                    }
+                }
+                else {
+                    var condXmin = extent.xmin >= premiumMaxExtent.xmin;
+                    var condXmax = extent.xmax <= premiumMaxExtent.xmax;
+                    var condYmin = extent.ymin >= premiumMaxExtent.ymin;
+                    var condYmax = extent.ymax <= premiumMaxExtent.ymax;
+                    var condLarge = condXmin && condXmax && condYmin && condYmax;
+
+                    if (!condLarge) {
+                        map.map.extent.update(premiumMaxExtent.xmin, premiumMaxExtent.ymin, premiumMaxExtent.xmax, premiumMaxExtent.ymax, map.map.spatialReference);
+                        map.map.setExtent(map.map.extent);
+                    }
+                }
+            };
+        }
+        function switchCountry() {
+            var id = document.getElementById('txtCountry').value;
+            baseMapCountry = id;
+            map.country = id;
+            map.level = null;
+            map.lat = null;
+            map.lon = null;
+            map.removeAllLayers();
+            var streetMapLayer = new nostra.maps.layers.StreetMap(map);
+            map.addLayer(streetMapLayer);
+        }
+        function switchLang() {
+            var rdoChk = document.getElementById("rdoSetE").checked;
+            if (rdoChk) {
+                nostra.config.Language.setLanguage(nostra.language.E);
+            } else {
+                nostra.config.Language.setLanguage(nostra.language.L);
+            }
+            if (menuName == "PM") { // Premium Map Menu
+                document.getElementById("btnPremiumMap").click();
+            }
+        }
+        function showLoading() {
+            document.getElementById("dlgLoading").style.display = "block";
+        }
+        function hideLoading() {
+            document.getElementById("dlgLoading").style.display = "none";
+        }
+
+
+      
+
+
+        const drawmap = (req_lat, req_lon) => {
+            //console.log(req_lat +   ',' + req_lon)
+            lat = req_lat;
+            lon = req_lon;
+            points.push([lat, lon]);
+            var circle = new nostra.maps.symbols.Circle({ radius: 3, color: "#FF0000", outline: "#FF0000", transparent: 1 });
+            pointLayer.addCircle(lat, lon, circle);
+
+        }; 
+
+       
+        function routeShow2(){
+
+            var line = new nostra.maps.symbols.Line({ color: "#32cd32", width: 2, transparent: 1 });   
+            pointLayer.addLine(points2, line);
+        }
+
+        function routeShow1(){
+            
+            var line2 = new nostra.maps.symbols.Line({ color: "#FF0000", width: 6, transparent: 1 });   
+            pointLayer.addLine(points1, line2);
+        }
+
+        function routeShow3(){
+            
+            var line3 = new nostra.maps.symbols.Line({ color: "#00438b", width: 8, transparent: 1 });   
+            pointLayer.addLine(points3, line3);
+        }
+
+        function test(route){  
+           
+            let routed = JSON.parse(route)
+            let position =[]
+            let lat_sp = 0;
+            let lon_sp =0;
+
+
+
+            for (i = 0 ; i< routed.features.length ; i++){
+                if (routed.features[i].geometry != undefined )
+                {
+                for (j = 0 ; j < routed.features[i].geometry.paths.length ; j++ )
+                {
+                    for (k=0 ; k < routed.features[i].geometry.paths[j].length ; k++)
+                    {            
+                        lon_sp = routed.features[i].geometry.paths[j][k][0];
+                        lat_sp = routed.features[i].geometry.paths[j][k][1];
+                        position.push([lat_sp, lon_sp]);
+                        //console.log(lat_sp)
+                    } 
+                }
+                }
+               
+            }
+
+            return position;
+            
+            // plot_position();
+           
+        }
+
+
+        function plot_position(){
+            var position =[]
+            var lat_sp = 0;
+            var lon_sp =0;
+            //console.log(route)
+            //console.log(route.features.length)
+            for (i = 0 ; i< route.features.length ; i++){
+                if (route.features[i].geometry != undefined )
+                {
+                    lon_sp = route.features[i].geometry.paths[0][0][0];
+                    lat_sp = route.features[i].geometry.paths[0][0][1];
+                    var circle = new nostra.maps.symbols.Circle({ radius: 10, color: "#FF0000", outline: "#FF0000", transparent: 1 });
+                    pointLayer.addCircle(lat_sp, lon_sp, circle);
+          
+                }
+               
+            }
+        }
+
+        function GO(){
+            var pointsA = []
+            pointsA.push([18.275531353000076, 99.65627797000008]);
+            map.setExtent(pointsA); 
+        }
+
+        function drawZone(){     
+
+            for(i = 0 ; i < file_Json_zone.length ; i++){    
+              
+                 
+                let routed = JSON.parse(file_Json_zone[i])  
+                let zone = []
+                let lat ; 
+                let lon;
+
+
+                let nostraLabel = new nostra.maps.symbols.Label({
+                    size: 8,
+                    yoffset: -4,
+                    color: "#2d2f37",
+                    haloColor: "#ffffff",
+                    haloSize: 1,
+                    fontFamily: "sans-serif"
+                });
+                
+                
+                let code_color = document.getElementById("id_color"+i).value;
+                var polygon = new nostra.maps.symbols.Polygon({ attributes: { name: "Branch Pathum Wan" }, color: code_color, outline: "", transparent: 0.3, label: nostraLabel });  
+
+
+                for (loopfeature = 0 ; loopfeature < routed.features[0].geometry.rings.length ; loopfeature++)
+                {
+                    for(j = 0 ; j < routed.features[0].geometry.rings[loopfeature].length ; j++)
+                    {
+                       
+                        lon = routed.features[0].geometry.rings[loopfeature][j][0];
+                        lat = routed.features[0].geometry.rings[loopfeature][j][1];
+                        zone.push([lat,lon])
+                    }
+                    //console.log(routed.features.geometry.rings[loopfeature]);
+                    //zone.push(features[0].geometry.rings)
+                    //console.log(routed.features[loopfeature].geometry.rings[loopfeature])
+                
+                    //zone.push(routed.features[0].geometry.rings[loopfeature][],)
+                }
+                console.log(zone)
+                pointLayer.addPolygon(zone, polygon);
+            }
+        }
+
+        function drawroute(){ 
+            document.getElementById("newdraw").style.display = 'block'
+            document.getElementById("draw").style.display = 'none'
+            if (file_Json_zone.length > 0 ){
+                drawZone();    
+            }
+           
+           
+            console.log(file_Json);
+            console.log(file_Json.length);
+            let obj = [] ;
+            let points_route_direction = [];
+            let lined; 
+            let convert_points = [];   
+            let return_convert ;
+            let sub_position = [] ; 
+            let data_all_position = [];
+            let all_points = [];
+        
+           
+            let mem_route ; 
+            let mem_last_lat ; 
+            let mem_last_lon;
+            let mem_routename ;
+            let depart_name  ;
+           
+            let mem_count = 0;
+
+            let str;
+            let n;
+            let n2;
+
+            for(i = 0 ; i < file_Json.length ; i++){ 
+
+                let pointLayer = new nostra.maps.layers.GraphicsLayer(map, { id: "layerGraphic"+i, mouseOver: false });
+                map.addLayer(pointLayer);
+
+                //convert Json string to Json object
+                let routed = JSON.parse(file_Json[i])  
+                let lon_sp ;
+                let lat_sp ;
+                let code_color = document.getElementById("id_color"+i).value;
+                let line1 = new nostra.maps.symbols.Line({ color: code_color, width: 4, transparent: 1 });   
+                mem_routename = routed.features[0].attributes.RouteName;
+              
+                var siteMarker = 60;
+               
+                //เข้าไป ใน Json
+                for (loopfeature = 0 ; loopfeature< routed.features.length ; loopfeature++)
+                {
+                    
+                    str = routed.features[loopfeature].attributes.Text;
+                    n3 = str.includes("Start at");
+                    if(n3===true){
+                        step_route_all.push([routed.features[1].geometry.paths[0][0][0], routed.features[1].geometry.paths[0][0][1], str ,mem_routename]);
+                    }
+
+                    if (routed.features[loopfeature].geometry != undefined )
+                    {
+                        for (j = 0 ; j < routed.features[loopfeature].geometry.paths.length ; j++ )
+                        {
+                            for (k=0 ; k < routed.features[loopfeature].geometry.paths[j].length ; k++)
+                            {                                   
+                                    
+                                lon_sp = routed.features[loopfeature].geometry.paths[j][k][0];
+                                lat_sp = routed.features[loopfeature].geometry.paths[j][k][1];
+                                mem_last_lat = lat_sp;
+                                mem_last_lon = lon_sp;
+                                mem_route = loopfeature;                             
+                                sub_position.push([lat_sp, lon_sp]);
+                                all_points.push([lat_sp, lon_sp]);
+                            } 
+                        }
+                    }else{
+                        if(mem_last_lat != undefined &&  mem_last_lon != undefined){
+                                
+                                n = str.includes("Depart S");
+                                n2 = str.includes("Finish at");
+                             
+
+                                if(n === true || n2 === true ){
+                                    console.log('true')                        
+                                    depart_name = str;
+                                    console.log('Departname'+depart_name)
+                                   
+                                    step_route_all.push([mem_last_lon, mem_last_lat , depart_name ,mem_routename]);
+                                    
+                                    var nostraLabel = new nostra.maps.symbols.Label({
+                                                    text: depart_name,
+                                                    size: "10",
+                                                    position: "top",
+                                                    color: code_color,
+                                                    haloColor: "#ffffff",
+                                                    haloSize: "1",
+                                                    xoffset:"0",
+                                                    yoffset: "-5"
+                                                });
+
+                            lstLabel.push(nostraLabel);
+                            let pointMarker = new nostra.maps.symbols.Marker({ url: "", width: 60, height: siteMarker, attributes: { POI_NAME: "TestAttr", POI_ROAD: "TestAttr" },  label: nostraLabel });
+                            pointLayer.addMarker(mem_last_lat, mem_last_lon, pointMarker);
+                            setLavelVisible(true);
+                            }                               
+                        }
+                    
+                    }
+                    
+                }
+                    Set_step_route_all.push(step_route_all);
+                   
+                    mem_count = 0;
+                    // document.getElementById("id_eye"+i).style.display = 'inline-block';
+                    //document.getElementById("id_btn_hide"+i).style.display = 'inline-block'; 
+                    //document.getElementById("id_btn_show"+i).style.display = 'inline-block';
+
+                   
+                    
+                      
+                   
+                   // document.getElementById("id_btn_show"+i).style.display ='inline-block'; 
+                    document.getElementById("id_btn_step"+i).style.display = 'inline-block'; 
+                    
+                    document.getElementById("id_file"+i).disabled = true;
+                    document.getElementById("id_file_zone"+i).disabled = true;
+                    document.getElementById("id_color"+i).disabled = true;
+                    
+
+                    pointLayer.addLine(sub_position, line1);
+                    data_all_position.push(sub_position)
+                    sub_position = []
+                    step_route_all = [];
+
+                    console.log("---------------------------------")
+                    setPointLayer.push(pointLayer);  
+
+                  
+                   // pointLayer= []   
+            }
+            let sCls = document.getElementsByClassName('switch');
+                    for (i=0 ; i<file_Json.length  ; i++){
+                        sCls[i].style.display='inline-block';
+                    }
+             map.setExtent(all_points); 
+             showStep(0)
+            
+        }
+
+        function hideRoute(req_i){
+            console.log("hideRoute"+req_i)
+            // console.log(setPointLayer)
+            // console.log(setPointLayer.length)
+            console.log(setPointLayer)
+            // console.log(setPointLayer[1])
+            setPointLayer[req_i].hide();       
+        }
+
+        function showRoute(req_i){
+            
+            if(document.getElementById("id_btn_show"+req_i).checked === true){
+                setPointLayer[req_i].show(); 
+            }else{
+                setPointLayer[req_i].hide();
+            }
+           
+        }
+
+        function newRoute(){
+            window.location.reload(false); 
+            // pointLayer.clear();
+            // drawroute()
+        }
+
+        function showStep(req_i){
+            var gal_step  =  document.getElementById("test_direction");
+            document.getElementById("name_step").innerHTML = Set_step_route_all[req_i][0][3]
+            gal_step.innerHTML = "";
+            console.log(Set_step_route_all.length)
+            
+            for(i = 0 ; i< Set_step_route_all[req_i].length ; i++ ){
+                let position_latlon = [];
+                let lat = Set_step_route_all[req_i][i][1];
+                let lon = Set_step_route_all[req_i][i][0];
+                let name = Set_step_route_all[req_i][i][2]; 
+                position_latlon.push(lat,lon)
+
+                gal_step.innerHTML += "<div  style='font-size:14px;float: left;width: 80px; height:80px; border-radius:90px;' class='btn_step' onclick='gotoLatlon("+position_latlon+")'>"+name+"</div>";
+                // for(j = 0 ; j < Set_step_route_all[req_i][i].length ; j++)
+                // {
+                //     gal_step.innerHTML += '<p>'+Set_step_route_all[req_i][i]+'</p>'
+                // }
+                
+                
+            }
+        }
+
+        function gotoLatlon(lat,lon){
+            map.setScale(18056);
+             let points = [];
+                console.log(lat);
+                console.log(lon);
+
+             points.push([lat,lon]);
+             console.log("point="+points)
+             map.setExtent(points); 
+            
+             //points = []
+        }
+
+        function setLavelVisible(visible) {
+                if (visible) {
+                    for (var i = 0; i < lstLabel.length; i++) {
+                        pointLayer.showLabel(lstLabel[i]);
+                    }
+                
+                } else {
+                    for (var i = 0; i < lstLabel.length; i++) {
+                        pointLayer.hideLabel(lstLabel[i]);
+                    }
+                }
+            }
+    </script>
+
+    <script>
+        var file_Json = [];
+        var colorRoute = [];
+
+        var openFile = function(event,i) {
+        var input = event.target;
+     
+        var reader = new FileReader();
+        reader.onload = function(){
+          console.log("a")
+          var text = reader.result;
+          let text_convert = text.replace(/\u21b5/g,'');
+          if (file_Json.length > 0 ){
+            file_Json[i] = text_convert
+          }else{
+            file_Json.push(text_convert);
+          }
+          console.log("b")
+        };
+        reader.readAsText(input.files[0]);
+        console.log(input.files[0])
+      };
+
+        var file_Json_zone = [];
+        var openFile_zone = function(event,i) {
+        var input_zone = event.target;
+        var reader_zone = new FileReader();
+        reader_zone.onload = function(){
+          var text_zone = reader_zone.result;
+          let text_convert_zone = text_zone.replace(/\u21b5/g,'');
+          if (file_Json_zone.length > 0 ){
+              file_Json_zone[i] = text_convert_zone
+          }else{
+            file_Json_zone.push(text_convert_zone);
+          }
+        
+        };
+        reader_zone.readAsText(input_zone.files[0]);
+       
+      };
+
+      addUploadfile = () => {
+
+          let data_amount_route = document.getElementById("valueinputfile").value;
+          var gal = document.getElementById('uploadfilebtn');
+          gal.innerHTML = ""
+          console.log(data_amount_route)
+          for (i= 0 ; i< data_amount_route ; i++ ){  
+            let id_file = "id_file"+i;
+            let id_file_zone = "id_file_zone"+i;
+            let id_color = "id_color"+i;
+            let id_btn_show = "id_btn_show"+i;
+            let id_btn_hide = "id_btn_hide"+i;
+            let id_btn_step = "id_btn_step"+i;
+            
+            gal.innerHTML += "<div style='background-color:' class='card'><div class='card-body'> <h1 style='font-size:16px; background-color:#1c4f9f;'  class='badge badge-success'>Route : "+i+"  </h1>&nbsp; <input accept='json' id="+id_file+" style='margin-top:0px;width:200px' type='file' accept='text/plain' onchange='openFile(event,"+i+")'> <input class='color_switch' id="+id_color+ " type='color' id='favcolor' name='favcolor' value='#ff2323'> &nbsp;<label class='switch'><input onclick='showRoute("+i+")' id="+id_btn_show+" type='checkbox' checked><span class='slider round'></span></label>  <button  id="+id_btn_hide+" onclick='hideRoute("+i+")'style='display:none;margin-left:5%'>hide</button> <button  id="+1+" onclick='showRoute("+i+")' style='display:none'>show</button> <button  id="+id_btn_step+" onclick='showStep("+i+")' style='display:none;border:none; border-radius:5% ;background-color:#6d93cd  !important' class='btn btn-secondary' >Step</button><br><br> <h1 style='font-size:16px ; background-color:gray; width:79.4px'  class='badge badge-danger'>Zone : "+i+"  </h1>&nbsp; <input accept='json' id="+id_file_zone+" style='margin-top:0px;width:200px' type='file' accept='text/plain' onchange='openFile_zone(event,"+i+")'> </div></div>"
+            // gal.innerHTML += " Route : "+i+" <input accept='json' id="+id_file+" style='margin-top:5px;width:200px' type='file' accept='text/plain' onchange='openFile(event)'> <input id="+id_color+ " type='color' id='favcolor' name='favcolor' value='#ffe401'> <br> <a href='#'  style='display:inline-none ;' id="+id_eye+"> show </a> <a href='#'  style='display:none ;' id="+id_eye_hide+"> hide </a> <hr>"
+          }
+      }
+    </script>
+    <style>
+        .btn_step {
+          background-color: #6d93cd;
+          border: none;
+          color: white;
+          padding: 12px 10px;   
+          text-align: center;
+          font-size: 16px;
+            margin: 4px 2px;
+          
+          transition: 0.3s;
+        }
+        
+        .active, .btn_step:hover {opacity: 1; background-color: #1951a6;}
+        
+        div.btn_step.active {opacity: 1; background-color: #9b3314;}
+
+         
+        </style> 
+
+</head>
+<body class="container" style="max-width: 100%;background-color:whitesmoke;">
+    <div>
+      
+
+        <div style="background-color:#1d52a4 ;border-radius: none; !important" class="card">
+           
+            <h2 style="color:white" class="card-header"> <span  class="badge badge-warning"> DISPLAY VRP ROUTE</span></h2>
+            
+          </div>
+       
+    </div>
+    <div id="dlgLoading" class="loadingWidget"></div>
+
+    
+    <div id="show">
+        <div>
+            <button id="btnStreetMap" onclick="switchStreetMap();">StreetMap</button>
+            <button id="btnOSM" onclick="switchOSM();">OpenStreetMap</button>
+            <button id="btnLightGray" onclick="switchImagery();">Imagery</button>
+            <button id="btnHybrid" onclick="switchHybrid();">Hybrid</button>
+            <button id="btnPremiumMap" onclick="switchPremiumMap();">PremiumMap</button>
+        </div>
+        <div style="margin: 5px;" id="divLang">
+            <div class="labelTxt">Language :</div>
+            <input id="rdoSetE" style="margin: 5px;" type="radio" name="showLabel" value="E" onclick="switchLang();" checked><label for="rdoSetE">English</label>
+            <input id="rdoSetL" style="margin: 5px;" type="radio" name="showLabel" value="L" onclick="switchLang();"><label for="rdoSetL">Local</label>
+        </div>
+        <div style="margin: 5px;">
+            <div class="labelTxt">Country :</div>
+            <div style="display:inline-block; vertical-align:top" id="divTextBox">
+            <input type="text" id="txtCountry" value="TH" style="width: 150px;" />
+            <button onclick="switchCountry();" id="Country">Change Country</button>
+            <div style="color: rgb(89,89,89); margin-top: 5px; font-size: 12px;">ex. TH,SG,MY,BN,VN,PH,ID,MM,LA,KH</div>
+            </div>
+            <span style="display:none" id="divCountry">TH</span>
+        </div>
+    </div>
+
+    <div class="">
+      
+        <div class="row">
+          <div style="max-width: 800px; !important" class="col-4">
+            <div style="background-color: #eaeff9; overflow-y: scroll; height: 1030px;" class="card">
+                <div class="card-body">
+                  <!-- <h5 style="color: ;" class="card-title">Json Route</h5> -->
+                  <!-- <hr> -->
+                  <div  class="card">
+                    <div class="card-body">
+                        <p style="margin: 0px; font-weight: 500;" style="color: ;"><img  style="background-color:orange; padding: 5px; border-radius: 15px;" src="Iconroute.png"> Input num Route your draw <span> <input min="0" id="valueinputfile" onchange="addUploadfile()" style="margin-left:20px;width:70px;border-radius: 25px; ; border-color: #e0e0e0; border-width: 1px;text-align: center;  outline: 0 !important;  "  type="number"></span></p>
+                    </div>
+                  </div>
+             
+               
+                  <div id="uploadfilebtn">
+        
+                  </div>
+                  <br>
+                
+                  <div id='output'>
+                  <!-- <textarea style="width: 1060px; height:220px" id="routename"  >
+                   
+                   
+                </textarea> -->
+                <!-- <h5 >choose colors of route   <span> <input style="border-radius:2px; width: 30px; height:30px" type="color" id="favcolor" name="favcolor" value="#ffe401"><br><br> </span></h5> -->
+            
+                 <button id="draw" style="margin-top: -15px; background-color: #3db456;border: none; !important; " class="btn btn-secondary" onclick="drawroute()">DrawRoute</button>
+                 <button id="newdraw" style="margin-top: -15px; background-color:orange;border: none; display: none !important; " class="btn btn-secondary" onclick="newRoute()">NewRoute</button>
+                 <br> <br>
+              </div>
+            </div>
+            </div>
+          </div>
+          
+          <div class="col-8">
+            <br>
+            <!-- <div style="width: 100%; height: 180px;; !important"> 
+                <div style="height:180px ;" class="card">
+                    <div class="card-header">
+                        Routename : <span id="name_step"></span>
+                        </div>
+                        <div   id="test_direction" style="overflow-x: scroll;width:100px" class="card-body">
+                        </div>
+                
+                    </div>
+            </div> -->
+
+                <div style="width: 100%; height: 180px; !important"> 
+                    <div style="height:180px ;" class="card">
+                        <div class="card-header">
+                            Routename : <span id="name_step"></span>
+                        </div>
+
+                        <div   id="test_direction" style="overflow-x:hidden; overflow-y: scroll;width:100%" class="card-body"></div>
+                    </div>
+
+                    <br>
+                    <div id="map"></div>
+                </div>
+          
+        </div>
+      </div>
+    <!-- <button class="btn btn-secondary" onclick="GO()">Let's GO</button>
+    <button class="btn btn-secondary" onclick="routeShow1()">Route1</button>
+    <button class="btn btn-secondary" onclick="routeShow2()">Route2</button>
+    <button class="btn btn-secondary" onclick="routeShow3()">Route3</button> -->
+
+    <br>    
+    <br>
+    
+</body>
+</html>
